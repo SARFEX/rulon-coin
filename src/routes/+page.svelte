@@ -92,7 +92,7 @@
       if (!touch) throw new Error("No touch detected");
       const distance = calculateDistance(center.x, center.y, touch.clientX, touch.clientY);
       const innerCircleRadius = window.innerWidth * 0.07;
-      const maxRotationSpeed = 10;
+      const maxRotationSpeed = 4;
 
       const currentAngle = Math.atan2(touch.clientY - center.y, touch.clientX - center.x);
       let deltaAngle = currentAngle - startAngle;
@@ -124,6 +124,19 @@
     isSpinning = false; 
   }
 
+  function createFoldLines(count: number, rollThickness: number): string {
+    let paths = '';
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2;
+      const x1 = 50 + Math.cos(angle) * 10;
+      const y1 = 50 + Math.sin(angle) * 10;
+      const x2 = 50 + Math.cos(angle) * (10 + rollThickness);
+      const y2 = 50 + Math.sin(angle) * (10 + rollThickness);
+      paths += `M${x1},${y1} L${x2},${y2} `;
+    }
+    return paths;
+  }
+
 </script>
 
 <main class="h-screen flex flex-col items-center justify-center bg-neutral-300 w-full"
@@ -137,7 +150,7 @@
       <ellipse cx={50} cy={90} rx={11 + rollThickness} ry={rollThickness * 0.06 + 1.2} fill="rgba(0,0,0,0.15)" />
       
       <!-- Paper line -->
-      <line x1="0" y1={30 - paperLineY * 0.15} x2="50" y2="{paperLineY-0.05}" stroke="#fff" stroke-width="0.5" />
+      <line x1="0" y1={35 - paperLineY * 0.2} x2="50" y2="{paperLineY-0.05}" stroke="#fff" stroke-width="0.5" />
       
       <!-- Toilet paper roll -->
       <g transform={`rotate(${rotationAngle*10}, 50, 50)`}>
@@ -146,6 +159,9 @@
         <!-- Embossed effect -->
         <circle cx="50" cy="50" r="{10 + rollThickness}" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1" />
         <circle cx="50" cy="50" r="{10 + rollThickness}" fill="none" stroke="rgba(0,0,0,0.07)" stroke-width="0.5" transform="translate(0.1,0.4)" />
+        
+        <!-- Fold lines -->
+        <!-- <path d={createFoldLines(6, rollThickness)} stroke="rgba(0,0,0,0.05)" stroke-width="3" fill="none" /> -->
         
       </g>
       
