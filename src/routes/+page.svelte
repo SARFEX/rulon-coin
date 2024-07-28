@@ -4,7 +4,6 @@
   import { onMount } from 'svelte';
   import { Button } from "$lib/components/ui/button";
 
-  // Group related variables
   let score = 0;
   let rollThickness = 0;
   let isSpinning = false;
@@ -13,6 +12,7 @@
   let paperLineY = 40 - rollThickness;
   let rotationSpeed = 0;
   let lastTimestamp = 0;
+  let rotationAngle = 0;
 
   function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
@@ -31,7 +31,6 @@
       updateCenter();
       window.addEventListener('resize', updateCenter);
 
-      // Start the animation loop
       requestAnimationFrame(updateRotation);
 
       return () => {
@@ -48,17 +47,16 @@
       lastTimestamp = timestamp;
     }
 
-    const deltaTime = (timestamp - lastTimestamp) / 1000; // Convert to seconds
+    const deltaTime = (timestamp - lastTimestamp) / 1000;
     lastTimestamp = timestamp;
 
-    // Update rollThickness based on rotationSpeed
     rollThickness += rotationSpeed * deltaTime;
+    rotationAngle += rotationSpeed * deltaTime * 60;
+    rotationAngle %= 360;
 
-    // Apply friction to gradually decrease speed
-    const friction = 2; // Adjust this value to change how quickly the roll slows down
+    const friction = 2;
     rotationSpeed *= Math.max(0, 1 - friction * deltaTime);
 
-    // Ensure rollThickness stays within bounds
     if (rollThickness >= 20) {
       score += 1;
       rollThickness = 0;
@@ -70,7 +68,6 @@
 
     paperLineY = 40 - rollThickness;
 
-    // Continue the animation loop
     requestAnimationFrame(updateRotation);
   }
 
@@ -135,18 +132,25 @@
       on:touchend={handleTouchEnd}
   >
   <div class="toilet-paper-roll relative w-full">
-    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><!-- Shadow -->
-      <!-- Тень -->
+    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+      <!-- Shadow -->
       <ellipse cx={50} cy={90} rx={11 + rollThickness} ry={rollThickness * 0.06 + 1.2} fill="rgba(0,0,0,0.15)" />
       
-      <!--  -->
-      <line x1="0" y1={30 - paperLineY * 0.15} x2="50" y2="{paperLineY}" stroke="#fff" stroke-width="1" />
+      <!-- Paper line -->
+      <line x1="0" y1={30 - paperLineY * 0.15} x2="50" y2="{paperLineY-0.05}" stroke="#fff" stroke-width="0.5" />
       
-      <!-- Рулон бумаги -->
-      <circle cx="50" cy="50" r="{10 + rollThickness}" fill="white" stroke="#fff" stroke-width="1" />
+      <!-- Toilet paper roll -->
+      <g transform={`rotate(${rotationAngle*10}, 50, 50)`}>
+        <circle cx="50" cy="50" r="{10 + rollThickness}" fill="#fff" stroke="#fff" stroke-width="0.5" />
+        
+        <!-- Embossed effect -->
+        <circle cx="50" cy="50" r="{10 + rollThickness}" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1" />
+        <circle cx="50" cy="50" r="{10 + rollThickness}" fill="none" stroke="rgba(0,0,0,0.07)" stroke-width="0.5" transform="translate(0.1,0.4)" />
+        
+      </g>
       
-      <!-- Втулка -->
-      <circle cx="50" cy="50" r="10" fill="rgb(212 212 212)" stroke="rgb(163 163 163)" stroke-width="2" />
+      <!-- Inner tube -->
+      <circle cx="50" cy="50" r="10" fill="rgb(220, 220, 220)" stroke="rgb(180, 180, 180)" stroke-width="1" />
     </svg>
   </div>
   <p class="text-2xl mb-4 text-gray-800">Счет: {score}</p>
