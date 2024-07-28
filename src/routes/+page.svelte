@@ -135,9 +135,17 @@
       on:touchend={handleTouchEnd}
   >
   <div class="toilet-paper-roll relative w-full">
-    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+    <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"><!-- Shadow -->
+      <!-- Тень -->
+      <ellipse cx={50} cy={90} rx={11 + rollThickness} ry={rollThickness * 0.06 + 1.2} fill="rgba(0,0,0,0.15)" />
+      
+      <!--  -->
       <line x1="0" y1={30 - paperLineY * 0.15} x2="50" y2="{paperLineY}" stroke="#fff" stroke-width="1" />
+      
+      <!-- Рулон бумаги -->
       <circle cx="50" cy="50" r="{10 + rollThickness}" fill="white" stroke="#fff" stroke-width="1" />
+      
+      <!-- Втулка -->
       <circle cx="50" cy="50" r="10" fill="rgb(212 212 212)" stroke="rgb(163 163 163)" stroke-width="2" />
     </svg>
   </div>
