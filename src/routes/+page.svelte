@@ -6,6 +6,7 @@
 
   let score = 0;
   let rollThickness = 0;
+  const maxRollThickness = 23;
   let isSpinning = false;
   let center: { x: number; y: number } = { x: 0, y: 0 };
   let startAngle = 0;
@@ -13,6 +14,8 @@
   let rotationSpeed = 0;
   let lastTimestamp = 0;
   let rotationAngle = 0;
+  let foldLines = '';
+  const maxRotationSpeed = 5;
 
   function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
@@ -27,6 +30,10 @@
         const rect = roll.getBoundingClientRect();
         center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
       }
+      // Инициализация foldLines
+      const minRadius = 10;
+      const maxRadius = 10 + rollThickness;
+      foldLines = createFoldLines(50, minRadius, maxRadius);
 
       updateCenter();
       window.addEventListener('resize', updateCenter);
@@ -57,13 +64,15 @@
     const friction = 2;
     rotationSpeed *= Math.max(0, 1 - friction * deltaTime);
 
-    if (rollThickness >= 20) {
+    if (rollThickness >= maxRollThickness) {
       score += 1;
       rollThickness = 0;
       rotationSpeed = 0;
+      foldLines = "";
     } else if (rollThickness < 0) {
       rollThickness = 0;
       rotationSpeed = 0;
+      foldLines = "";
     }
 
     paperLineY = 40 - rollThickness;
@@ -92,7 +101,6 @@
       if (!touch) throw new Error("No touch detected");
       const distance = calculateDistance(center.x, center.y, touch.clientX, touch.clientY);
       const innerCircleRadius = window.innerWidth * 0.07;
-      const maxRotationSpeed = 4;
 
       const currentAngle = Math.atan2(touch.clientY - center.y, touch.clientX - center.x);
       let deltaAngle = currentAngle - startAngle;
@@ -123,18 +131,46 @@
   function handleTouchEnd(): void { 
     isSpinning = false; 
   }
-
-  function createFoldLines(count: number, rollThickness: number): string {
+  function createFoldLines(count: number, minRadius: number, maxRadius: number): string {
     let paths = '';
+    const centerX = 0;
+    const centerY = 0;
+    const curveFactor = 0.3;
+
     for (let i = 0; i < count; i++) {
-      const angle = (i / count) * Math.PI * 2;
-      const x1 = 50 + Math.cos(angle) * 10;
-      const y1 = 50 + Math.sin(angle) * 10;
-      const x2 = 50 + Math.cos(angle) * (10 + rollThickness);
-      const y2 = 50 + Math.sin(angle) * (10 + rollThickness);
-      paths += `M${x1},${y1} L${x2},${y2} `;
+      const radius = minRadius + Math.random() * (maxRadius - minRadius);
+      const startAngle = Math.random() * Math.PI * 2;
+      const len = Math.random() * 0.3 + 0.2;
+      const arcLength = len * Math.PI; // Длина дуги от 0.2π до 0.5π
+      const endAngle = startAngle + arcLength;
+
+      const startX = centerX + Math.cos(startAngle) * radius;
+      const startY = centerY + Math.sin(startAngle) * radius;
+      const endX = centerX + Math.cos(endAngle) * radius;
+      const endY = centerY + Math.sin(endAngle) * radius;
+
+      // Вычисляем контрольную точку для квадратичной кривой Безье
+      const midAngle = (startAngle + endAngle) / 2;
+      const controlDistance = radius * (1 + Math.sin(arcLength / 2) * curveFactor);
+
+      const controlX = centerX + Math.cos(midAngle) * controlDistance;
+      const controlY = centerY + Math.sin(midAngle) * controlDistance;
+
+      paths += `M${startX},${startY} Q${controlX},${controlY} ${endX},${endY} `;
     }
+
     return paths;
+  }
+  
+  let maxRadius = 0;
+
+  $: {
+    const minRadius = 10;
+    const newMaxRadius = Math.round(10 + rollThickness);
+    if (newMaxRadius !== maxRadius && rotationSpeed > maxRotationSpeed * 0.3){
+      maxRadius = newMaxRadius;
+      foldLines = createFoldLines(10 + (rollThickness / maxRollThickness * 60), minRadius, maxRadius);
+    }
   }
 
 </script>
@@ -161,8 +197,9 @@
         <circle cx="50" cy="50" r="{10 + rollThickness}" fill="none" stroke="rgba(0,0,0,0.07)" stroke-width="0.5" transform="translate(0.1,0.4)" />
         
         <!-- Fold lines -->
-        <!-- <path d={createFoldLines(6, rollThickness)} stroke="rgba(0,0,0,0.05)" stroke-width="3" fill="none" /> -->
-        
+        <g transform="translate(50, 50) ">
+          <path d={foldLines} stroke="rgba(0,0,0,0.05)" stroke-width="0.25" fill="none" />
+        </g>
       </g>
       
       <!-- Inner tube -->
