@@ -191,7 +191,7 @@
       <ellipse cx={50} cy={90} rx={11 + rollThickness} ry={rollThickness * 0.06 + 1.2} fill="rgba(0,0,0,0.15)" />
       
       <!-- Paper line -->
-      <line x1="0" y1={35 - paperLineY * 0.2} x2="50" y2="{paperLineY-0.05}" stroke="#fff" stroke-width="0.5" />
+      <line x1="0" y1={35 - paperLineY * 0.2} x2="50" y2="{paperLineY-0.2}" stroke="#fff" stroke-width="0.5" stroke-linecap="round" />
       
       <!-- Toilet paper roll -->
       <g transform={`rotate(${rotationAngle*10}, 50, 50)`}>
