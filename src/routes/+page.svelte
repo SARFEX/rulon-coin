@@ -15,6 +15,7 @@
   let rotationAngle = 0;
   let foldLines = '';
   const maxRotationSpeed = 5;
+  let isFullRoll = false;
 
   function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
@@ -25,10 +26,10 @@
       const roll = document.querySelector('.toilet-paper-roll');
       if (!roll) throw new Error("Toilet paper roll element not found");
       
-      function updateCenter() {
+      const updateCenter = () => {
         const rect = roll.getBoundingClientRect();
         center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-      }
+      };
 
       updateCenter();
       window.addEventListener('resize', updateCenter);
@@ -50,6 +51,7 @@
     const maxRadius = 10 + maxRollThickness;
     foldLines = createFoldLines(70, minRadius, maxRadius);
     rollThickness = 0;
+    isFullRoll = false;
   }
 
   function updateRotation(timestamp: number) {
@@ -68,9 +70,8 @@
     rotationSpeed *= Math.max(0, 1 - friction * deltaTime);
 
     if (rollThickness >= maxRollThickness) {
-      // score += 1;
-      // createNewRoll();
       rollThickness = maxRollThickness;
+      isFullRoll = true;
     } else if (rollThickness < 0) {
       rollThickness = 0;
       rotationSpeed = 0;
@@ -116,11 +117,7 @@
       if (newRotationSpeed > rotationSpeed) {
         rotationSpeed = newRotationSpeed;
       }
-
-      if (deltaAngle < 0) {
-        rotationSpeed = -rotationSpeed * 0.75;
-      }
-
+      
       startAngle = currentAngle;
     }
     catch (error) {
@@ -131,6 +128,13 @@
 
   function handleTouchEnd(): void { 
     isSpinning = false; 
+  }
+
+  function handleTap(): void {
+    if (isFullRoll) {
+      score += 1;
+      createNewRoll();
+    }
   }
 
   function createFoldLines(count: number, minRadius: number, maxRadius: number): string {
@@ -164,12 +168,16 @@
   }
 </script>
 
-<main class="h-screen flex flex-col items-center justify-center bg-neutral-300 w-full"
-      on:touchstart={handleTouchStart} 
-      on:touchmove={handleTouchMove} 
-      on:touchend={handleTouchEnd}
-  >
-  <div class="toilet-paper-roll relative w-full">
+<main class="h-screen flex flex-col items-center justify-center bg-neutral-300 w-full relative">
+  <button
+    class="absolute inset-0 w-full h-full opacity-0 cursor-default"
+    aria-label="Игровая область"
+    on:touchstart={handleTouchStart}
+    on:touchmove={handleTouchMove}
+    on:touchend={handleTouchEnd}
+    on:click={handleTap}
+  ></button>
+  <div class="toilet-paper-roll relative w-full touch-none pointer-events-none">
     <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
       <!-- Shadow -->
       <ellipse cx={50} cy={90} rx={11 + rollThickness} ry={rollThickness * 0.06 + 1.2} fill="rgba(0,0,0,0.15)" />
@@ -200,7 +208,7 @@
       <circle cx="50" cy="50" r="10" fill="rgb(220, 220, 220)" stroke="rgb(180, 180, 180)" stroke-width="1" />
     </svg>
   </div>
-  <p class="text-2xl mb-4 text-gray-800">Счет: {score}</p>
+  <p class="text-2xl mb-4 text-gray-800 touch-none pointer-events-none">Счет: {score}</p>
 </main>
 
 <style>
