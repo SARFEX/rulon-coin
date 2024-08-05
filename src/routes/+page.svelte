@@ -117,7 +117,11 @@
       if (newRotationSpeed > rotationSpeed) {
         rotationSpeed = newRotationSpeed;
       }
-      
+
+      if (deltaAngle < 0) {
+        rotationSpeed = -rotationSpeed * 0.75;
+      }
+
       startAngle = currentAngle;
     }
     catch (error) {
