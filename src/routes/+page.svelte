@@ -2,7 +2,6 @@
 
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Button } from "$lib/components/ui/button";
 
   let score = 0;
   let rollThickness = 0;
@@ -30,14 +29,11 @@
         const rect = roll.getBoundingClientRect();
         center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
       }
-      // Инициализация foldLines
-      const minRadius = 10;
-      const maxRadius = 10 + rollThickness;
-      foldLines = createFoldLines(50, minRadius, maxRadius);
 
       updateCenter();
       window.addEventListener('resize', updateCenter);
 
+      createNewRoll();
       requestAnimationFrame(updateRotation);
 
       return () => {
@@ -48,6 +44,13 @@
       console.error("Error in onMount:", error);
     }
   });
+
+  function createNewRoll() {
+    const minRadius = 10;
+    const maxRadius = 10 + maxRollThickness;
+    foldLines = createFoldLines(70, minRadius, maxRadius);
+    rollThickness = 0;
+  }
 
   function updateRotation(timestamp: number) {
     if (lastTimestamp === 0) {
@@ -65,14 +68,12 @@
     rotationSpeed *= Math.max(0, 1 - friction * deltaTime);
 
     if (rollThickness >= maxRollThickness) {
-      score += 1;
-      rollThickness = 0;
-      rotationSpeed = 0;
-      foldLines = "";
+      // score += 1;
+      // createNewRoll();
+      rollThickness = maxRollThickness;
     } else if (rollThickness < 0) {
       rollThickness = 0;
       rotationSpeed = 0;
-      foldLines = "";
     }
 
     paperLineY = 40 - rollThickness;
@@ -117,7 +118,7 @@
       }
 
       if (deltaAngle < 0) {
-        rotationSpeed = -rotationSpeed * 0.5;
+        rotationSpeed = -rotationSpeed * 0.75;
       }
 
       startAngle = currentAngle;
@@ -131,6 +132,7 @@
   function handleTouchEnd(): void { 
     isSpinning = false; 
   }
+
   function createFoldLines(count: number, minRadius: number, maxRadius: number): string {
     let paths = '';
     const centerX = 0;
@@ -141,7 +143,7 @@
       const radius = minRadius + Math.random() * (maxRadius - minRadius);
       const startAngle = Math.random() * Math.PI * 2;
       const len = Math.random() * 0.3 + 0.2;
-      const arcLength = len * Math.PI; // Длина дуги от 0.2π до 0.5π
+      const arcLength = len * Math.PI;
       const endAngle = startAngle + arcLength;
 
       const startX = centerX + Math.cos(startAngle) * radius;
@@ -149,7 +151,6 @@
       const endX = centerX + Math.cos(endAngle) * radius;
       const endY = centerY + Math.sin(endAngle) * radius;
 
-      // Вычисляем контрольную точку для квадратичной кривой Безье
       const midAngle = (startAngle + endAngle) / 2;
       const controlDistance = radius * (1 + Math.sin(arcLength / 2) * curveFactor);
 
@@ -161,18 +162,6 @@
 
     return paths;
   }
-  
-  let maxRadius = 0;
-
-  $: {
-    const minRadius = 10;
-    const newMaxRadius = Math.round(10 + rollThickness);
-    if (newMaxRadius !== maxRadius && rotationSpeed > maxRotationSpeed * 0.3){
-      maxRadius = newMaxRadius;
-      foldLines = createFoldLines(10 + (rollThickness / maxRollThickness * 60), minRadius, maxRadius);
-    }
-  }
-
 </script>
 
 <main class="h-screen flex flex-col items-center justify-center bg-neutral-300 w-full"
@@ -196,9 +185,14 @@
         <circle cx="50" cy="50" r="{10 + rollThickness}" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1" />
         <circle cx="50" cy="50" r="{10 + rollThickness}" fill="none" stroke="rgba(0,0,0,0.07)" stroke-width="0.5" transform="translate(0.1,0.4)" />
         
-        <!-- Fold lines -->
-        <g transform="translate(50, 50) ">
-          <path d={foldLines} stroke="rgba(0,0,0,0.05)" stroke-width="0.25" fill="none" />
+        <!-- Маска для линий складок -->
+        <mask id="foldLinesMask">
+          <circle cx="0" cy="0" r="{10 + rollThickness}" fill="white" />
+        </mask>
+        
+        <!-- Линии складок -->
+        <g transform="translate(50, 50)">
+          <path d={foldLines} stroke="rgba(0,0,0,0.07)" stroke-width="0.25" fill="none" mask="url(#foldLinesMask)" />
         </g>
       </g>
       
