@@ -16,6 +16,7 @@
   let foldLines = '';
   const maxRotationSpeed = 5;
   let isFullRoll = false;
+  let lastDeltaAngle = 0;
 
   function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
@@ -88,6 +89,7 @@
       const touch = event.touches[0];
       if (!touch) throw new Error("No touch detected");
       startAngle = Math.atan2(touch.clientY - center.y, touch.clientX - center.x);
+      lastDeltaAngle = 0;
     }
     catch (error) {
       console.error("Error in handleTouchStart:", error);
@@ -114,15 +116,17 @@
       const angleSpeed = Math.min(Math.abs(deltaAngle) / (Math.PI * 0.1), 1);
       const newRotationSpeed = angleSpeed * speedFactor * maxRotationSpeed;
       
-      if (newRotationSpeed > rotationSpeed) {
-        rotationSpeed = newRotationSpeed;
-      }
-
-      if (deltaAngle < 0) {
-        rotationSpeed = -rotationSpeed * 0.75;
+      if (newRotationSpeed > Math.abs(rotationSpeed)) {
+        if (Math.sign(deltaAngle) !== Math.sign(rotationSpeed)) {
+          // Плавное изменение направления
+          rotationSpeed += deltaAngle * 0.3; // Коэффициент плавности
+        } else {
+          rotationSpeed = newRotationSpeed * Math.sign(deltaAngle);
+        }
       }
 
       startAngle = currentAngle;
+      lastDeltaAngle = deltaAngle;
     }
     catch (error) {
       console.error("Error in handleTouchMove:", error);
