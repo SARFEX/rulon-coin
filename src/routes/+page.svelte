@@ -226,10 +226,11 @@
   <button
     class="absolute inset-0 w-full h-full opacity-0 cursor-default"
     aria-label="Игровая область"
+    on:click={handleTap}
     on:touchstart={handleTouchStart}
     on:touchmove={handleTouchMove}
     on:touchend={handleTouchEnd}
-    on:click={handleTap}
+    on:touchcancel={handleTouchEnd}
   ></button>
   <div class="toilet-paper-roll relative w-full touch-none pointer-events-none">
     <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
