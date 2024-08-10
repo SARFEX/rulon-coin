@@ -9,7 +9,6 @@
   let isSpinning = false;
   let center: { x: number; y: number } = { x: 0, y: 0 };
   let startAngle = 0;
-  let paperLineY = 40 - rollThickness;
   let rotationSpeed = 0;
   let lastTimestamp = 0;
   let rotationAngle = 0;
@@ -86,8 +85,6 @@
       rotationSpeed = 0;
     }
 
-    paperLineY = 40 - rollThickness;
-    
     if (isTearing) {
       tearProgress += Math.abs(rotationSpeed) * deltaTime * 1.0;
       if (tearProgress >= 1) tearProgress = 1;
@@ -195,7 +192,7 @@
     return paths;
   }
 
-  function getPaperLinePath(paperLineY: number, isTearing: boolean, tearProgress: number, rollThickness: number): string {
+  function getPaperLinePath(isTearing: boolean, tearProgress: number, rollThickness: number): string {
     const startX = 0;
     const startY = 35;
     const centerX = 50;
@@ -210,7 +207,7 @@
 
     if (!isTearing) {
       const controlX = (startX + endX) / 2;
-      const controlY = Math.min(startY, endY) + 7;
+      const controlY = Math.min(startY, endY) + 6;
       return `M${startX} ${startY} Q${controlX} ${controlY} ${endX} ${endY}`;
     } else {
       const t = Math.min(1, tearProgress);
@@ -238,7 +235,7 @@
       <ellipse cx={50} cy={90} rx={11 + rollThickness} ry={rollThickness * 0.06 + 1.2} fill="rgba(0,0,0,0.15)" />
       
       <!-- Paper line -->
-      <path d={getPaperLinePath(paperLineY, isTearing, tearProgress, rollThickness)} stroke="white" stroke-width="0.5" stroke-linecap="round" fill="none" />
+      <path d={getPaperLinePath(isTearing, tearProgress, rollThickness)} stroke="white" stroke-width="0.5" stroke-linecap="round" fill="none" />
       
       <!-- Toilet paper roll -->
       <g transform={`rotate(${rotationAngle*10}, 50, 50)`}>
@@ -255,7 +252,7 @@
         
         <!-- Линии складок -->
         <g transform="translate(50, 50)">
-          <path d={foldLines} stroke="rgba(0,0,0,0.07)" stroke-width="0.25" fill="none" mask="url(#foldLinesMask)" />
+          <path d={foldLines} stroke="rgba(0,0,0,0.06)" stroke-width="0.25" fill="none" mask="url(#foldLinesMask)" />
         </g>
       </g>
       
