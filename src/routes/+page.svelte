@@ -88,7 +88,7 @@
     paperLineY = 40 - rollThickness;
     
     if (isTearing) {
-      tearProgress += Math.abs(rotationSpeed) * deltaTime * 0.5;
+      tearProgress += Math.abs(rotationSpeed) * deltaTime * 1.0;
       if (tearProgress >= 1) tearProgress = 1;
     }
 
@@ -185,20 +185,29 @@
     return paths;
   }
 
-  function getPaperLinePath(paperLineY: number, isTearing: boolean, tearProgress: number): string {
+  function getPaperLinePath(paperLineY: number, isTearing: boolean, tearProgress: number, rollThickness: number): string {
     const startX = 0;
-    const startY = 35 - paperLineY * 0.2;
-    const endX = 50;
-    const endY = paperLineY;
+    const startY = 35;
+    const centerX = 50;
+    const centerY = 50;
+    const radius = 10 + rollThickness;
+    
+    const angleOffset = Math.PI / 6;
+    const touchAngle = Math.PI - angleOffset;
+    
+    const endX = centerX - radius * Math.sin(touchAngle)+ 2 ;
+    const endY = centerY + radius * Math.cos(touchAngle) - 1;
 
     if (!isTearing) {
-      return `M${startX} ${startY} L${endX} ${endY}`;
+      const controlX = (startX + endX) / 2;
+      const controlY = Math.min(startY, endY) + 7;
+      return `M${startX} ${startY} Q${controlX} ${controlY} ${endX} ${endY}`;
     } else {
       const t = Math.min(1, tearProgress);
       const currentX = startX + (endX - startX) * t;
-      const currentY = startY + (endY - startY) * t - (Math.sin(t * Math.PI) * 2);
+      const currentY = startY + (endY - startY) * t + (Math.sin(t * Math.PI) * 2);
 
-      return `M${currentX} ${currentY} ${endX} ${endY}`;
+      return `M${currentX} ${currentY} Q${endX} ${endY} ${endX} ${endY}`;
     }
   }
 </script>
@@ -218,7 +227,7 @@
       <ellipse cx={50} cy={90} rx={11 + rollThickness} ry={rollThickness * 0.06 + 1.2} fill="rgba(0,0,0,0.15)" />
       
       <!-- Paper line -->
-      <path d={getPaperLinePath(paperLineY, isTearing, tearProgress)} stroke="white" stroke-width="0.5" stroke-linecap="round" fill="none" />
+      <path d={getPaperLinePath(paperLineY, isTearing, tearProgress, rollThickness)} stroke="white" stroke-width="0.5" stroke-linecap="round" fill="none" />
       
       <!-- Toilet paper roll -->
       <g transform={`rotate(${rotationAngle*10}, 50, 50)`}>
@@ -267,6 +276,7 @@
     transform-origin: -40% -40%;
     fill: #000;
     color: #000;
+    pointer-events: none;
   }
   
   .finger-animation2 {
