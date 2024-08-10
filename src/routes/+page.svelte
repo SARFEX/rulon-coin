@@ -16,7 +16,7 @@
   let foldLines = '';
   const maxRotationSpeed = 5;
   let isFullRoll = false;
-  let lastDeltaAngle = 0;
+  let showOnboarding = true;
 
   function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
@@ -26,7 +26,7 @@
     try {
       const roll = document.querySelector('.toilet-paper-roll');
       if (!roll) throw new Error("Toilet paper roll element not found");
-      
+
       const updateCenter = () => {
         const rect = roll.getBoundingClientRect();
         center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
@@ -89,7 +89,6 @@
       const touch = event.touches[0];
       if (!touch) throw new Error("No touch detected");
       startAngle = Math.atan2(touch.clientY - center.y, touch.clientX - center.x);
-      lastDeltaAngle = 0;
     }
     catch (error) {
       console.error("Error in handleTouchStart:", error);
@@ -99,7 +98,7 @@
 
   function handleTouchMove(event: TouchEvent): void {
     if (!isSpinning) return;
-    
+
     try {
       const touch = event.touches[0];
       if (!touch) throw new Error("No touch detected");
@@ -108,14 +107,14 @@
 
       const currentAngle = Math.atan2(touch.clientY - center.y, touch.clientX - center.x);
       let deltaAngle = currentAngle - startAngle;
-      
+
       if (deltaAngle > Math.PI) deltaAngle -= 2 * Math.PI;
       if (deltaAngle < -Math.PI) deltaAngle += 2 * Math.PI;
 
       const speedFactor = Math.min(distance / innerCircleRadius, 1);
       const angleSpeed = Math.min(Math.abs(deltaAngle) / (Math.PI * 0.1), 1);
       const newRotationSpeed = angleSpeed * speedFactor * maxRotationSpeed;
-      
+
       if (newRotationSpeed > Math.abs(rotationSpeed)) {
         if (Math.sign(deltaAngle) !== Math.sign(rotationSpeed)) {
           // Плавное изменение направления
@@ -126,7 +125,6 @@
       }
 
       startAngle = currentAngle;
-      lastDeltaAngle = deltaAngle;
     }
     catch (error) {
       console.error("Error in handleTouchMove:", error);
@@ -143,6 +141,7 @@
       score += 1;
       createNewRoll();
     }
+    showOnboarding = false; // скрыть онбординг анимацию при первом клике
   }
 
   function createFoldLines(count: number, minRadius: number, maxRadius: number): string {
@@ -217,9 +216,52 @@
     </svg>
   </div>
   <p class="text-2xl mb-4 text-gray-800 touch-none pointer-events-none">Счет: {score}</p>
+  
+  {#if showOnboarding}
+    <div class="finger-animation">
+      <img src="/finger.png" alt="Палец" class="finger-animation2" />
+    </div>
+  {/if}
 </main>
 
 <style>
   :global(body) { margin: 0; padding: 0; overflow: hidden; touch-action: none; }
   .toilet-paper-roll { touch-action: none; }
+
+  .finger-animation {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    animation: moveFinger 2s infinite;
+    top: -27%; bottom: 0;
+    left: 27%; right: 0;
+    margin: auto;
+    transform-origin: -40% -40%;
+    fill: #000;
+    color: #000;
+  }
+  
+  .finger-animation2 {
+    width: 100%;
+    height: 100%;
+    animation: moveFinger2 2s infinite ease-in-out;
+  }
+
+  @keyframes moveFinger {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  @keyframes moveFinger2 {
+    0% {
+      transform: translateY(-100%);
+    }
+    100% {
+      transform: translateY(100%);
+    }
+  }
 </style>
