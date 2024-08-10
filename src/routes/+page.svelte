@@ -17,6 +17,8 @@
   const maxRotationSpeed = 5;
   let isFullRoll = false;
   let showOnboarding = true;
+  let tearProgress = 0;
+  let isTearing = false;
 
   function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
@@ -53,6 +55,8 @@
     foldLines = createFoldLines(70, minRadius, maxRadius);
     rollThickness = 0;
     isFullRoll = false;
+    isTearing = false;
+    tearProgress = 0;
   }
 
   function updateRotation(timestamp: number) {
@@ -63,7 +67,9 @@
     const deltaTime = (timestamp - lastTimestamp) / 1000;
     lastTimestamp = timestamp;
 
-    rollThickness += rotationSpeed * deltaTime;
+    if (!isTearing) {
+      rollThickness += rotationSpeed * deltaTime;
+    }
     rotationAngle += rotationSpeed * deltaTime * 60;
     rotationAngle %= 360;
 
@@ -73,12 +79,18 @@
     if (rollThickness >= maxRollThickness) {
       rollThickness = maxRollThickness;
       isFullRoll = true;
+      isTearing = true;
     } else if (rollThickness < 0) {
       rollThickness = 0;
       rotationSpeed = 0;
     }
 
     paperLineY = 40 - rollThickness;
+    
+    if (isTearing) {
+      tearProgress += Math.abs(rotationSpeed) * deltaTime * 0.5;
+      if (tearProgress >= 1) tearProgress = 1;
+    }
 
     requestAnimationFrame(updateRotation);
   }
@@ -117,8 +129,7 @@
 
       if (newRotationSpeed > Math.abs(rotationSpeed)) {
         if (Math.sign(deltaAngle) !== Math.sign(rotationSpeed)) {
-          // Плавное изменение направления
-          rotationSpeed += deltaAngle * 0.3; // Коэффициент плавности
+          rotationSpeed += deltaAngle * 0.3;
         } else {
           rotationSpeed = newRotationSpeed * Math.sign(deltaAngle);
         }
@@ -141,7 +152,7 @@
       score += 1;
       createNewRoll();
     }
-    showOnboarding = false; // скрыть онбординг анимацию при первом клике
+    showOnboarding = false;
   }
 
   function createFoldLines(count: number, minRadius: number, maxRadius: number): string {
@@ -173,6 +184,23 @@
 
     return paths;
   }
+
+  function getPaperLinePath(paperLineY: number, isTearing: boolean, tearProgress: number): string {
+    const startX = 0;
+    const startY = 35 - paperLineY * 0.2;
+    const endX = 50;
+    const endY = paperLineY;
+
+    if (!isTearing) {
+      return `M${startX} ${startY} L${endX} ${endY}`;
+    } else {
+      const t = Math.min(1, tearProgress);
+      const currentX = startX + (endX - startX) * t;
+      const currentY = startY + (endY - startY) * t - (Math.sin(t * Math.PI) * 2);
+
+      return `M${currentX} ${currentY} ${endX} ${endY}`;
+    }
+  }
 </script>
 
 <main class="h-screen flex flex-col items-center justify-center bg-neutral-300 w-full relative">
@@ -190,11 +218,11 @@
       <ellipse cx={50} cy={90} rx={11 + rollThickness} ry={rollThickness * 0.06 + 1.2} fill="rgba(0,0,0,0.15)" />
       
       <!-- Paper line -->
-      <line x1="0" y1={35 - paperLineY * 0.2} x2="50" y2="{paperLineY-0.2}" stroke="#fff" stroke-width="0.5" stroke-linecap="round" />
+      <path d={getPaperLinePath(paperLineY, isTearing, tearProgress)} stroke="white" stroke-width="0.5" stroke-linecap="round" fill="none" />
       
       <!-- Toilet paper roll -->
       <g transform={`rotate(${rotationAngle*10}, 50, 50)`}>
-        <circle cx="50" cy="50" r="{10 + rollThickness}" fill="#fff" stroke="#fff" stroke-width="0.5" />
+        <circle cx="50" cy="50" r="{10 + rollThickness}" fill="white" stroke="white" stroke-width="0.5" />
         
         <!-- Embossed effect -->
         <circle cx="50" cy="50" r="{10 + rollThickness}" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1" />
