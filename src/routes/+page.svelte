@@ -19,6 +19,7 @@
   let showOnboarding = true;
   let tearProgress = 0;
   let isTearing = false;
+  let isHolding = false;
 
   function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
@@ -73,7 +74,7 @@
     rotationAngle += rotationSpeed * deltaTime * 60;
     rotationAngle %= 360;
 
-    const friction = 2;
+    const friction = isHolding ? 10 : 2;
     rotationSpeed *= Math.max(0, 1 - friction * deltaTime);
 
     if (rollThickness >= maxRollThickness) {
@@ -92,12 +93,18 @@
       if (tearProgress >= 1) tearProgress = 1;
     }
 
+    // Check if onboarding should be hidden
+    if (showOnboarding && rollThickness >= maxRollThickness * 0.1) {
+      showOnboarding = false;
+    }
+
     requestAnimationFrame(updateRotation);
   }
 
   function handleTouchStart(event: TouchEvent): void {
     try {
       isSpinning = true;
+      isHolding = true;
       const touch = event.touches[0];
       if (!touch) throw new Error("No touch detected");
       startAngle = Math.atan2(touch.clientY - center.y, touch.clientX - center.x);
@@ -105,6 +112,7 @@
     catch (error) {
       console.error("Error in handleTouchStart:", error);
       isSpinning = false;
+      isHolding = false;
     }
   }
 
@@ -136,15 +144,18 @@
       }
 
       startAngle = currentAngle;
+      isHolding = false;
     }
     catch (error) {
       console.error("Error in handleTouchMove:", error);
       isSpinning = false;
+      isHolding = false;
     }
   }
 
   function handleTouchEnd(): void { 
     isSpinning = false; 
+    isHolding = false;
   }
 
   function handleTap(): void {
@@ -152,7 +163,6 @@
       score += 1;
       createNewRoll();
     }
-    showOnboarding = false;
   }
 
   function createFoldLines(count: number, minRadius: number, maxRadius: number): string {
