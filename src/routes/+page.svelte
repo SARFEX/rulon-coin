@@ -3,6 +3,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
 
+  let roll: HTMLElement;
+  let isReady = false;
   let score = 0;
   let rollThickness = 0;
   const maxRollThickness = 23;
@@ -19,35 +21,32 @@
   let tearProgress = 0;
   let isTearing = false;
   let isHolding = false;
+  
+  onMount(mount);
+    
+  async function mount() {
+    const WebApp = (await import('@twa-dev/sdk')).default;
+    
+    WebApp.ready();
+    WebApp.disableVerticalSwipes();
+    WebApp.expand();
+    
+    isReady = true;
+    console.info(WebApp.initData);
 
-  function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
-    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-  }
-
-  onMount(() => {
-    try {
-      const roll = document.querySelector('.toilet-paper-roll');
-      if (!roll) throw new Error("Toilet paper roll element not found");
-
-      const updateCenter = () => {
-        const rect = roll.getBoundingClientRect();
-        center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-      };
-
+    createNewRoll();
+    
+    setTimeout(() => {
       updateCenter();
-      window.addEventListener('resize', updateCenter);
-
-      createNewRoll();
       requestAnimationFrame(updateRotation);
+    }, 0);
+    
+    window.addEventListener('resize', updateCenter);
 
-      return () => {
-        window.removeEventListener('resize', updateCenter);
-      };
-    }
-    catch (error) {
-      console.error("Error in onMount:", error);
-    }
-  });
+    return () => {
+      window.removeEventListener('resize', updateCenter);
+    };
+  };
 
   function createNewRoll() {
     const minRadius = 10;
@@ -58,6 +57,11 @@
     isTearing = false;
     tearProgress = 0;
   }
+  
+  function updateCenter() {
+    const rect = roll.getBoundingClientRect();
+    center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  };
 
   function updateRotation(timestamp: number) {
     if (lastTimestamp === 0) {
@@ -91,7 +95,7 @@
     }
 
     // Check if onboarding should be hidden
-    if (showOnboarding && rollThickness >= maxRollThickness * 0.1) {
+    if (showOnboarding === true && rollThickness >= maxRollThickness * 0.1) {
       showOnboarding = false;
     }
 
@@ -148,6 +152,10 @@
       isSpinning = false;
       isHolding = false;
     }
+  }
+  
+  function calculateDistance(x1: number, y1: number, x2: number, y2: number): number {
+    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
   }
 
   function handleTouchEnd(): void { 
@@ -219,7 +227,7 @@
   }
 </script>
 
-<main class="h-screen flex flex-col items-center justify-center bg-neutral-300 w-full relative">
+<main class:hidden={!isReady} class="h-screen flex flex-col items-center justify-center bg-neutral-300 w-full relative">
   <button
     class="absolute inset-0 w-full h-full opacity-0 cursor-default"
     aria-label="Игровая область"
@@ -229,7 +237,7 @@
     on:touchend={handleTouchEnd}
     on:touchcancel={handleTouchEnd}
   ></button>
-  <div class="toilet-paper-roll relative w-full touch-none pointer-events-none">
+  <div bind:this={roll} class="relative w-full touch-none pointer-events-none">
     <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
       <!-- Shadow -->
       <ellipse cx={50} cy={90} rx={11 + rollThickness} ry={rollThickness * 0.06 + 1.2} fill="rgba(0,0,0,0.15)" />
@@ -271,7 +279,6 @@
 
 <style>
   :global(body) { margin: 0; padding: 0; overflow: hidden; touch-action: none; }
-  .toilet-paper-roll { touch-action: none; }
 
   .finger-animation {
     position: absolute;

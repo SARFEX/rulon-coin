@@ -30,6 +30,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@twa-dev/sdk": "^7.8.0",
 		"bits-ui": "^0.21.12",
 		"clsx": "^2.1.1",
 		"tailwind-merge": "^2.4.0",
